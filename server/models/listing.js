@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const randomstring = require("randomstring");
 
 const listingSchema = new mongoose.Schema({
     title: {
@@ -24,7 +23,7 @@ const listingSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        default: `${randomstring.generate(16)}`
+        select: false
     },
     createdAt: {
         type: Date,

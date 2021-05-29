@@ -1,39 +1,44 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './bootstrap.min.css'
+import { transitions, positions, Provider as AlertProvider } from 'react-alert'
+import AlertTemplate from 'react-alert-template-basic'
+import 'mdb-react-ui-kit/dist/css/mdb.min.css'
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { createStore, combineReducers, applyMiddleware, compose } from 'redux';
+
+import ownerReducer from './redux/reducers/ownerReducer';
+import cartReducer from './redux/reducers/cartReducer';
 import messageReducer from './redux/reducers/messageReducer';
-import { insertMessage } from './redux/actions/messageActions';
+import inquiryReducer from './redux/reducers/inquiryReducer';
+import listingReducer from './redux/reducers/listingReducer';
 
 const rootReducer = combineReducers({
+  ownerReducer,
+  cartReducer,
   messageReducer,
+  inquiryReducer,
+  listingReducer
 });
 
-const store = createStore(rootReducer, applyMiddleware(thunk));
-
-let host = window.location.host.split(':')[0] + (window.location.port && `:${window.location.port}`);
-console.log(host);
-let webSocket;
-
-if (host.includes('localhost')) {
-  webSocket = new WebSocket('ws://localhost:4004');
-} else {
-  webSocket = new WebSocket('ws://' + host + '/websocket');
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(rootReducer, /* preloadedState, */ composeEnhancers(applyMiddleware(thunk)));
+const options = {
+  position: positions.BOTTOM_CENTER,
+  timeout: 5000,
+  offset: '6px',
+  transition: transitions.SCALE
 }
 
-webSocket.onmessage = (message) => {
-  console.log(message)
-  store.dispatch(insertMessage(message.data));
-};
 
 ReactDOM.render(
   <Provider store={store}>
-    <App />
+    <AlertProvider template={AlertTemplate} {...options}>
+      <App />
+    </AlertProvider>
   </Provider>
   , document.getElementById('root'));
 

@@ -1,47 +1,26 @@
 import React from 'react';
-//import axios from 'axios';
 import { BrowserRouter as Router, Route } from 'react-router-dom'
-import { Container } from 'react-bootstrap'
-//import { useDispatch, useSelector } from 'react-redux';
-//import { updateMessages, handlTextChange, submitMessage } from './redux/actions/messageActions';
-
-//const Message = ({ data }) => (<div>{data}</div>);
+import { MDBContainer } from 'mdb-react-ui-kit'
 
 import HomePage from './pages/Home'
+import NewListing from './pages/listings/NewListing'
+import ViewListing from './pages/listings/ViewListing'
+import Checkout from '././pages/Checkout'
+import Navbar from '../src/components/Navbar'
 
 const App = () => {
-  /**
-  const dispatch = useDispatch();
-  const messages = useSelector(state => state.messageReducer.messages);
-  const text = useSelector(state => state.messageReducer.text);
-
-  React.useEffect(() => {
-    axios.get('/messanger/getMessages')
-      .then((res) => {
-        dispatch(updateMessages(res.data));
-      })
-      .catch((e) => {
-        console.log(e);
-      });
-  }, []);
-
-  const onSubmit = () => {
-    dispatch(submitMessage());
-  }
-
-  const handleTextChange = (e) => {
-    dispatch(handlTextChange(e.target.value));
-  }
-  **/
-
   return (
-    <Router>
-      <main className='py-3'>
-        <Container>
-          <Route path='/' component={HomePage} exact />
-        </Container>
-      </main>
-    </Router>
+    <main>
+      <Router>
+        <Navbar></Navbar>
+        <MDBContainer>
+          <Route exact path='/' component={HomePage} />
+          <Route path='/newListing' component={NewListing} />
+          <Route path='/viewListing/:id' component={ViewListing} />
+          <Route path='/checkout' component={Checkout} />
+        </MDBContainer>
+      </Router>
+    </main>
   );
 };
 

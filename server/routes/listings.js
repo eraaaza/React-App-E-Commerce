@@ -1,7 +1,9 @@
 const express = require('express');
+const randomstring = require("randomstring");
 const router = express.Router();
-
+const www = require('../bin/www')
 const Listing = require('../models/listing')
+const Inquiry = require('../models/inquiry')
 
 /* CREATE a listing. */
 router.post('/', function (req, res, next) {
@@ -9,7 +11,8 @@ router.post('/', function (req, res, next) {
         title: req.body.title,
         description: req.body.description,
         type: req.body.type,
-        price: req.body.price
+        price: req.body.price,
+        password: `${randomstring.generate(16)}`
     }, function (e, newListing) {
         if (e) {
             return res.status(500).json({
@@ -17,78 +20,142 @@ router.post('/', function (req, res, next) {
             })
         }
 
-        return res.status(201).json(newListing)
+        www.listingCreatedMessage({
+            title: req.body.title,
+            createdAt: newListing.createdAt
+        })
+
+        return res.status(200).json(newListing)
+    });
+});
+
+/* VIEW listings. */
+router.get('/', function (req, res, next) {
+    Listing.find({}, function (e, allListings) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
+
+        return res.status(200).json(allListings)
     });
 });
 
 /* GET a listing. */
 router.get('/:id', function (req, res, next) {
-    // TODO: Business logic here
-    const listing1 = {
-        description: "Gym equipment",
-        type: "Equipment",
-        price: 125,
-        title: "item 1",
-        id: req.params.id,
-        inquiries: [],
-    };
+    Listing.findById(req.params.id).populate("inquiries").exec(function (e, foundListing) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
 
-    res.send(listing1);
-});
+        if (!foundListing) {
+            return res.status(404).json({
+                errors: "Listing does not exist"
+            })
+        }
 
-/* VIEW listings. */
-router.get('/', function (req, res, next) {
-
-    // TODO: Business logic here
-    const listing1 = {
-        description: "Gym equipment",
-        type: "Equipment",
-        price: 125,
-        title: "item 1",
-        id: '234567',
-        inquiries: [],
-    };
-
-    const listing2 = {
-        description: "Surfing equipment",
-        type: "Equipment",
-        price: 90,
-        title: "item 2",
-        id: '435678',
-        inquiries: [],
-    };
-
-    res.send([listing1, listing2]);
+        return res.status(200).json(foundListing)
+    });
 });
 
 /* DELETE a listing. */
-router.delete('/:id', (req, res, next) => {
-    // TODO: Business logic here
-    res.send({ id: req.query.id, message: 'Deleted listing successfully' });
+router.delete('/:id', function (req, res, next) {
+    Listing.findOneAndDelete({ _id: req.params.id, password: req.body.password }).exec(function (e) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
+
+        return res.status(200).json({
+            message: "deleted"
+        })
+    });
+});
+
+/* Password Test */
+router.post('/:id/password', function (req, res, next) {
+    Listing.findById(req.params.id).select('+password').exec(function (e, foundListing) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
+
+        if (!foundListing) {
+            return res.status(404).json({
+                errors: "Listing does not exist"
+            })
+        }
+
+        if (req.body.password === foundListing.password) {
+            return res.status(200).json(foundListing)
+        } else {
+            return res.status(401).json({
+                message: 'Wrong password'
+            })
+        }
+    });
 });
 
 /* MAKE an Inquiry. */
-router.post('/:id/inquiries', (req, res, next) => {
-    const id = Math.random().toString(26).substr(2, 8);
-    // TODO: Business logic here
+router.post('/:id/inquiries', function (req, res, next) {
+    Listing.findById(req.params.id).populate("inquiries").exec(function (e, foundListing) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
+        if (!foundListing) {
+            return res.status(404).json({
+                errors: "Listing does not exist"
+            })
+        } else {
+            Inquiry.create({
+                text: req.body.text
+            }, function (e, newInquiry) {
+                if (e) {
+                    return res.status(500).json({
+                        errors: e.errors
+                    })
+                }
 
-    res.send({ listingId: req.params.id, id: id, message: 'Successfully created an inquiry' });
+                foundListing.inquiries.push(newInquiry);
+                foundListing.save();
+
+                return res.status(200).json(newInquiry)
+            });
+        }
+    });
 });
 
 /* GET Inquiries. */
-router.get('/:id/inquiries', (req, res, next) => {
-    // TODO: add business logic here
-    const inquiry1 = {
-        id: '1234',
-        message: "Interested",
-    }
+router.get('/:id/inquiries', function (req, res, next) {
+    Listing.findById(req.params.id).populate("inquiries").exec(function (e, foundListing) {
+        if (e) {
+            return res.status(500).json({
+                errors: e.errors
+            })
+        }
+        if (!foundListing) {
+            return res.status(404).json({
+                errors: "Listing does not exist"
+            })
+        } else {
+            Inquiry.find({}, function (e, allInquiries) {
+                if (e) {
+                    return res.status(500).json({
+                        errors: e.errors
+                    })
+                }
 
-    const inquiry2 = {
-        id: '5678',
-        message: "When can I see the item",
-    }
-
-    res.send([inquiry1, inquiry2]);
+                return res.status(200).json(allInquiries)
+            });
+        }
+    });
 });
 
 module.exports = router;

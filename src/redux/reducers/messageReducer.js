@@ -1,9 +1,9 @@
-const INITIAL_STATE = {
+const MESSAGES = {
   messages: [],
   text: '',
 };
 
-const messageReducer = (state = INITIAL_STATE, action) => {
+const messageReducer = (state = MESSAGES, action) => {
   switch (action.type) {
     case 'UPDATE_MESSAGES':
       return {
